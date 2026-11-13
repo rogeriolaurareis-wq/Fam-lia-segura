@@ -203,7 +203,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2 border-t border-attention bg-attention-soft px-4 py-1.5 text-sm text-foreground sm:px-6">
               <FlaskConical className="size-4 shrink-0 text-attention" aria-hidden />
               <span>
-                <strong>Versão de testes.</strong> Dados só neste navegador, sem criptografia validada. Use dados fictícios.{" "}
+                <strong>Versão de testes.</strong> Dados locais e backup opcional; proteção ainda em testes. Use dados fictícios.{" "}
                 <Link to="/sobre" className="underline decoration-2 underline-offset-2">
                   Saiba mais
                 </Link>

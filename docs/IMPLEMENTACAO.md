@@ -24,7 +24,7 @@ são cotas oficiais. Não há links comerciais em alimentos ou medicamentos.
 
 Requer Node 24 e npm. Usar `npm ci`, `npm run dev`, `npm run typecheck`,
 `npm test` e `npm run build`. O lockfile npm fixa as dependências para reprodução.
-O bun.lock original foi preservado como histórico de importação; o fluxo de CI usa npm.
+O fluxo usa somente package-lock.json para evitar ambiguidade entre gerenciadores.
 
 ## Limites reais
 
@@ -35,8 +35,13 @@ Exportações da versão 2 exigem este código ou versão compatível; o app ant
 rejeitá-las. Dados anteriores foram mantidos e não associados silenciosamente ao catálogo,
 para evitar combinar produtos ou unidades incorretos.
 
-Ainda não há: autenticação, quatro contas residenciais conectadas, recuperação em nuvem,
-chat remoto, fornecedores de mapas autorizados ou pacotes regionais offline.
+A versão privada usa autenticação da plataforma ChatGPT e oferece backup manual em
+nuvem por conta, com recuperação e proteção contra sobrescrita concorrente. O acesso
+por chave pessoal definitivo ainda não existe. O backup publicado aguarda teste com
+sessão autenticada real; os testes de API usam armazenamento simulado.
+
+Ainda não há: quatro contas residenciais conectadas, chat remoto, fornecedores de
+mapas autorizados ou pacotes regionais offline.
 Registrar essas funções como concluídas somente depois de implementação e testes.
 O cache de aplicação deve ser homologado no endereço de produção; prévia e dev não
 registram service worker. A presença de código PWA não comprova reabertura sem rede.
@@ -46,3 +51,13 @@ registram service worker. A presença de código PWA não comprova reabertura se
 Testes incluem seleção, cálculo, alternativas, texto sem dados privados, falta limitada a
 zero, pendências, migração e corrupção de dados, uso da interface e falha de salvamento.
 Os testes de interface usam JSDOM; não são homologação visual em aparelho Android/iOS.
+
+## Publicação privada de teste — 13/11/2026
+
+https://familia-segura-rogerio.closedmole8.chatgpt.site/
+
+Publicação confirmada pelo serviço. Acesso restrito à conta proprietária via ChatGPT.
+24 testes, checagem TypeScript e build passaram. No navegador local foram verificados
+a seleção de arroz e feijão, cálculo para 4 pessoas/7 dias e cópia da lista. O endereço
+publicado exibiu a barreira de login esperada; sem sessão autenticada não foi possível
+validar o backup em produção. Não usar dados sensíveis reais nesta versão de teste.
