@@ -1,7 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PawPrint } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { PersonPhoto } from "@/components/fs/PersonPhoto";
 import { AddButton, DL, EmptyState, FormActions, PageHeader, Ready, RecordActions, RecordCard, Section, Tag, TestDataWarning } from "@/components/fs/page";
 import { CheckField, FormErrorSummary, NumberField, SelectField, TextAreaField, TextField } from "@/components/fs/fields";
 import { countLinks } from "@/lib/domain/links";
@@ -34,7 +36,7 @@ function AnimalsPage() {
   if (editing)
     return (
       <Ready>
-        <AnimalForm initial={editing} onCancel={() => setEditing(null)} onSave={(a) => upsert("animals", { ...a, updatedAt: nowIso() }) && setEditing(null)} />
+        <AnimalForm key={editing.id} initial={editing} onCancel={() => setEditing(null)} onSave={(a, addAnother) => { if (upsert("animals", { ...a, updatedAt: nowIso() })) setEditing(addAnother ? newAnimal() : null); }} />
       </Ready>
     );
 
@@ -69,9 +71,12 @@ function AnimalsPage() {
                   }
                   actions={<RecordActions name={a.name} onEdit={() => setEditing(a)} onDelete={() => remove("animals", a.id)} linkedCount={countLinks(data, "animals", a.id)} />}
                 >
+                  {a.photoDataUrl && <img src={a.photoDataUrl} alt={`Foto de ${a.name}`} className="mb-4 size-28 rounded-xl object-cover" />}
                   <DL
                     items={[
-                      ["Identificação", a.identification],
+                      ["Cor ou cores", a.color ?? ""],
+                      ["Pelagem ou cobertura", a.coatType ?? ""],
+                      ["Sinais particulares", a.identification],
                       ["Microchip", a.microchip],
                       ["Comportamento", a.behavior],
                       ["Restrição de dieta", a.dietRestriction],
@@ -90,26 +95,36 @@ function AnimalsPage() {
   );
 }
 
-function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a: Animal) => void; onCancel: () => void }) {
+function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a: Animal, addAnother?: boolean) => void; onCancel: () => void }) {
   const { data } = useStore();
   const [a, setA] = useState(initial);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const saveAndContinue = useRef(false);
   const [errors, setErrors] = useState<Errs<Animal>>({});
   const set = <K extends keyof Animal>(k: K, v: Animal[K]) => setA((p) => ({ ...p, [k]: v }));
   const isNew = !data.animals.some((x) => x.id === initial.id);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    const addAnother = saveAndContinue.current;
+    saveAndContinue.current = false;
+    if (photoBusy) return;
     const errs = validateAnimal(a);
     setErrors(errs);
-    if (!hasErrors(errs)) onSave({ ...a, name: a.name.trim() });
+    if (!hasErrors(errs)) {
+      const record = { ...a, name: a.name.trim() };
+      if (addAnother) onSave(record, true);
+      else onSave(record);
+    }
   };
 
   return (
     <form onSubmit={submit} noValidate className="space-y-6">
       <PageHeader code="M02" title={isNew ? "Novo animal" : `Editar: ${initial.name}`} description="Só o nome é obrigatório." />
       <FormErrorSummary errors={errors} />
-      <Section title="Identificação">
+      <Section title="Identificação do pet" description="Foto e características ajudam a reconhecer o animal. Todos esses detalhes são opcionais.">
         <div className="grid gap-5 sm:grid-cols-2">
+          <div className="sm:col-span-2"><PersonPhoto label="Foto do pet" value={a.photoDataUrl ?? ""} onChange={v => set("photoDataUrl", v)} onBusyChange={setPhotoBusy} /></div>
           <TextField label="Nome" value={a.name} onChange={(v) => set("name", v)} error={errors.name} maxLength={60} />
           <SelectField label="Espécie" value={a.species} onChange={(v) => set("species", v as Species)} options={(Object.keys(SPECIES_LABEL) as Species[]).map((s) => ({ value: s, label: SPECIES_LABEL[s] }))} />
           {a.species === "outro" && <TextField label="Qual espécie?" value={a.speciesOther} onChange={(v) => set("speciesOther", v)} error={errors.speciesOther} />}
@@ -118,7 +133,9 @@ function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a
           <TextField label="Idade" optional hint="Ex.: 3 anos, filhote" value={a.ageText} onChange={(v) => set("ageText", v)} />
           <NumberField label="Peso" optional suffix="kg" value={a.weightKg} onChange={(v) => set("weightKg", v)} error={errors.weightKg} />
           <SelectField label="Porte" optional value={a.size} onChange={(v) => set("size", v)} placeholder="Não informar" options={[{ value: "pequeno", label: "Pequeno" }, { value: "medio", label: "Médio" }, { value: "grande", label: "Grande" }]} />
-          <TextField label="Identificação visual" optional hint="Ex.: coleira, plaquinha, manchas" value={a.identification} onChange={(v) => set("identification", v)} />
+          <TextField label="Cor ou cores" optional hint="Ex.: preto e branco, caramelo, cinza rajado. Descreva também as manchas." value={a.color ?? ""} onChange={(v) => set("color", v)} maxLength={200} />
+          <TextField label="Tipo de pelagem ou cobertura" optional hint="Ex.: pelo curto e liso, longo, encaracolado, sem pelos, penas ou escamas." value={a.coatType ?? ""} onChange={(v) => set("coatType", v)} maxLength={200} />
+          <TextAreaField label="Sinais particulares e identificação" optional hint="Ex.: mancha branca na pata, orelha dobrada, cicatriz, coleira ou plaquinha." value={a.identification} onChange={(v) => set("identification", v)} />
           <TextField label="Microchip" optional value={a.microchip} onChange={(v) => set("microchip", v)} error={errors.microchip} maxLength={20} />
         </div>
       </Section>
@@ -145,7 +162,7 @@ function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a
           </div>
         </div>
       </Section>
-      <FormActions onCancel={onCancel} />
+      <div className="flex flex-wrap gap-2 border-t pt-4"><Button type="submit" onClick={() => { saveAndContinue.current = false; }} disabled={photoBusy}>{photoBusy ? "Preparando foto…" : "Salvar"}</Button><Button type="submit" variant="outline" onClick={() => { saveAndContinue.current = true; }} disabled={photoBusy}>Salvar e adicionar outro pet</Button><Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button></div>
     </form>
   );
 }

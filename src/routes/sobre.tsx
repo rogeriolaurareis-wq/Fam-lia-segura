@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Clock, Download, Upload, Wifi } from "lucide-react";
 
+import { CloudBackup } from "@/components/fs/CloudBackup";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog, Note, PageHeader, Ready, Section, Tag, fmtDate } from "@/components/fs/page";
 import { SCHEMA_VERSION } from "@/lib/storage/persist";
@@ -28,9 +29,9 @@ const NEEDS_NET = [
   "Ligações dependem da rede telefônica do aparelho, não da internet do aplicativo.",
 ];
 const PENDING = [
-  "Servidor (backend) e envio real de check-in/SOS para contatos: não existe nesta versão.",
-  "Sincronização entre aparelhos: não existe. Cada navegador tem seus próprios dados.",
-  "Autenticação, criptografia e acesso controlado: pendentes de validação. Por isso, use apenas dados fictícios.",
+  "Envio real de check-in/SOS para contatos: não existe nesta versão.",
+  "Sincronização automática entre aparelhos: não existe. Recuperação manual pela nuvem está disponível neste endereço privado.",
+  "Acesso privado usa a conta ChatGPT deste endereço; autenticação própria do produto e proteção dos dados locais ainda precisam de homologação. Use dados fictícios.",
   "Mapas, rotas e trânsito: não integrados.",
   "Fontes oficiais automáticas de avisos e notificações: não integradas.",
   "Homologação clínica de conteúdo de saúde, cardápios e metas de reservas: pendente.",
@@ -75,6 +76,7 @@ function AboutBody() {
 
   return (
     <div className="space-y-6">
+      <CloudBackup />
       <div className="grid gap-4 lg:grid-cols-3">
         <ListCard title="Funciona neste aparelho" icon={<CheckCircle2 className="text-primary" />} items={LOCAL} />
         <ListCard title="Depende de conexão" icon={<Wifi className="text-info" />} items={NEEDS_NET} />

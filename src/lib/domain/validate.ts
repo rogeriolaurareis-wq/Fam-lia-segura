@@ -1,6 +1,7 @@
 import { ageFromBirth } from "./age";
 import { validateBlood } from "./blood";
 import { isHttpsUrl } from "./notices";
+import { AGE_BANDS } from "./types";
 import type { Animal, Contact, Destination, EquipmentItem, KitItem, Notice, Person, SupplyItem, Treatment, Vehicle } from "./types";
 
 /** Error messages keyed by the record's own field names (plus extra keys such as "blood"). */
@@ -22,6 +23,9 @@ export function validatePerson(p: Person, today: Date = new Date()): Errs<Person
   const e: Errs<Person, "blood"> = {};
   if (!p.name.trim()) e.name = "Informe o nome ou apelido.";
   else if (p.name.trim().length > 80) e.name = "Use no máximo 80 caracteres.";
+  if (p.ageBand && !AGE_BANDS.includes(p.ageBand)) e.ageBand = "Escolha uma faixa de idade válida.";
+  if (p.photoDataUrl && (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.photoDataUrl) || p.photoDataUrl.length > 400_000)) e.photoDataUrl = "Foto inválida ou muito grande.";
+  if ((p.identificationMarks?.length ?? 0) > 1000) e.identificationMarks = "Use até 1000 caracteres para os sinais de identificação.";
   if (p.birthDate) {
     const age = ageFromBirth(p.birthDate, today);
     if (age === null) e.birthDate = "Data de nascimento inválida ou no futuro.";
@@ -37,6 +41,7 @@ export function validatePerson(p: Person, today: Date = new Date()): Errs<Person
 
 export function validateAnimal(a: Animal): Errs<Animal> {
   const e: Errs<Animal> = {};
+  if (a.photoDataUrl && (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a.photoDataUrl) || a.photoDataUrl.length > 400_000)) e.photoDataUrl = "Foto inválida ou muito grande.";
   if (!a.name.trim()) e.name = "Informe o nome do animal.";
   if (a.species === "outro" && !a.speciesOther.trim()) e.speciesOther = "Descreva a espécie.";
   if (badOptionalNumber(a.weightKg, 0, 2000)) e.weightKg = "Peso deve ser um número maior que 0.";

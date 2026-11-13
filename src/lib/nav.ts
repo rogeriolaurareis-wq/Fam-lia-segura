@@ -47,7 +47,7 @@ export const NAV: NavItem[] = [
   { to: "/animais", code: "M02", label: "Animais", icon: PawPrint },
   { to: "/moradia", code: "M03", label: "Moradia", icon: Home },
   { to: "/rede", code: "M04", label: "Rede e check-in", icon: NetworkNodes },
-  { to: "/reservas", code: "M05", label: "Reservas", icon: Droplet },
+  { to: "/reservas", code: "M05", label: "Lista de compras", icon: Droplet },
   { to: "/equipamentos", code: "M06", label: "Equipamentos", icon: Backpack },
   { to: "/saida", code: "M07", label: "Plano de saída", icon: RouteIcon },
   { to: "/saude", code: "M08", label: "Saúde e cuidados", icon: BriefcaseMedical },

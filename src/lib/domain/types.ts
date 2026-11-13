@@ -1,4 +1,5 @@
 // Família Segura — domain model (local-only, versioned in src/lib/storage/persist.ts).
+import { emptyShopping, type ShoppingPlan } from "./shopping";
 
 export type Tri = "sim" | "nao" | "nao_sei";
 export const TRI_LABEL: Record<Tri, string> = { sim: "Sim", nao: "Não", nao_sei: "Não sei" };
@@ -30,6 +31,8 @@ export type Sex = "" | "feminino" | "masculino" | "intersexo" | "prefiro_nao_inf
 export type Pregnancy = "" | "nao_se_aplica" | "gestante" | "amamentando";
 
 export interface Person extends Base {
+  photoDataUrl?: string;
+  identificationMarks?: string;
   name: string;
   relation: string;
   birthDate: string; // yyyy-mm-dd or ""
@@ -74,6 +77,9 @@ export const SIZE_LABEL: Record<Exclude<AnimalSize, "">, string> = {
 };
 
 export interface Animal extends Base {
+  photoDataUrl?: string;
+  color?: string;
+  coatType?: string;
   name: string;
   species: Species;
   speciesOther: string;
@@ -134,6 +140,7 @@ export const RISK_SHORT: Record<RiskKey, string> = {
 };
 
 export interface Home {
+  location?: { latitude: number; longitude: number; accuracy: number; capturedAt: string };
   address: string;
   reference: string;
   type: "" | "casa" | "apartamento" | "sobrado" | "outro";
@@ -329,6 +336,7 @@ export interface Notice extends Base {
 }
 
 export interface AppData {
+  shopping: ShoppingPlan;
   people: Person[];
   animals: Animal[];
   home: Home;
@@ -353,6 +361,7 @@ export type CollectionKey = {
 
 export function emptyData(): AppData {
   return {
+    shopping: emptyShopping(),
     people: [],
     animals: [],
     home: {

@@ -9,7 +9,7 @@ import { CheckInDialog, EmergencyNumbers } from "@/components/fs/CheckInDialog";
 import { CHECKIN_KIND_LABEL, checkInStatusLabel } from "@/lib/domain/checkin";
 import { countLinks } from "@/lib/domain/links";
 import { hasErrors, normalizePhone, validateContact, type Errs } from "@/lib/domain/validate";
-import type { Contact } from "@/lib/domain/types";
+import type { Contact, Person } from "@/lib/domain/types";
 import { newId, nowIso, useStore } from "@/lib/storage/store";
 import { pageHead } from "@/lib/seo";
 
@@ -91,6 +91,10 @@ function NetworkPage() {
                 />
               </>
             )}
+          </Section>
+
+          <Section title="Vínculos das pessoas" description="Defina aqui a relação, o responsável e o contato de emergência de cada pessoa da sua casa.">
+            {data.people.length ? data.people.map(p => <PersonLinks key={p.id} person={p} people={data.people} contacts={data.contacts} onSave={next => upsert("people", { ...next, updatedAt: nowIso() })} />) : <p>Cadastre primeiro as pessoas em Minha família.</p>}
           </Section>
 
           <Section title="Contatos" actions={<AddButton onClick={() => setEditing(newContact())}>Adicionar contato</AddButton>}>
@@ -176,4 +180,20 @@ function ContactForm({ initial, onSave, onCancel }: { initial: Contact; onSave: 
       <FormActions onCancel={onCancel} />
     </form>
   );
+}
+
+function PersonLinks({ person, people, contacts, onSave }: { person: Person; people: Person[]; contacts: Contact[]; onSave: (p: Person) => boolean }) {
+  const [p, setP] = useState(person);
+  const [saved, setSaved] = useState(false);
+  const change = (changes: Partial<Person>) => { setP(prev => ({ ...prev, ...changes })); setSaved(false); };
+  return <form className="mb-4 space-y-4 rounded-xl border p-4" onSubmit={e => { e.preventDefault(); setSaved(onSave(p)); }}>
+    <h3 className="text-lg font-bold">{person.name}</h3>
+    <div className="grid gap-4 sm:grid-cols-2">
+      <TextField label={`Vínculo de ${person.name}`} optional hint="Ex.: mãe, filho, avó, amigo" value={p.relation} onChange={relation => change({ relation })} />
+      <SelectField label={`Responsável por ${person.name}`} optional value={p.responsibleId ?? ""} placeholder="Nenhum" options={people.filter(o => o.id !== p.id).map(o => ({ value: o.id, label: o.name }))} onChange={v => change({ responsibleId: v || null })} />
+      <SelectField label={`Contato de emergência de ${person.name}`} optional value={p.emergencyContactId ?? ""} placeholder="Nenhum" options={contacts.map(c => ({ value: c.id, label: `${c.name} — ${c.phone}` }))} onChange={v => change({ emergencyContactId: v || null })} />
+    </div>
+    <Button type="submit">Salvar vínculos de {person.name}</Button>
+    {saved && <p role="status">Vínculos salvos neste aparelho.</p>}
+  </form>;
 }
