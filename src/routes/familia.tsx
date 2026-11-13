@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Users } from "lucide-react";
 
@@ -34,7 +34,7 @@ type PersonErrs = Errs<Person, "blood">;
 type ErrKey = keyof PersonErrs;
 const STEP_FIELDS: readonly (readonly ErrKey[])[] = [["name", "ageBand"], ["weightKg", "heightCm"], [], ["photoDataUrl", "identificationMarks"]];
 
-function FamilyPage() {
+export function FamilyPage() {
   const { data, upsert, remove } = useStore();
   const [editing, setEditing] = useState<Person | null>(null);
 
@@ -53,9 +53,7 @@ function FamilyPage() {
 
   return (
     <>
-      <PageHeader code="M01" title="Minha família" description="Somente pessoas. Remédios, alimentos e suprimentos ficam em outros módulos.">
-        <AddButton onClick={() => setEditing(newPerson())}>Adicionar pessoa</AddButton>
-      </PageHeader>
+      <PageHeader code="M01" title="Minha família" description="Somente pessoas. Remédios, alimentos e suprimentos ficam em outros módulos." />
       <Ready>
         {data.people.length === 0 ? (
           <EmptyState
@@ -65,6 +63,7 @@ function FamilyPage() {
             action={<AddButton onClick={() => setEditing(newPerson())}>Adicionar a primeira pessoa</AddButton>}
           />
         ) : (
+          <div className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
             {data.people.map((p) => {
               const band = bandForPerson(p);
@@ -99,6 +98,8 @@ function FamilyPage() {
               );
             })}
           </div>
+          <AddButton onClick={() => setEditing(newPerson())}>Adicionar pessoa</AddButton>
+          </div>
         )}
       </Ready>
     </>
@@ -110,6 +111,11 @@ export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onS
   const [p, setP] = useState<Person>({ ...initial, ageBand: bandForPerson(initial) ?? "", birthDate: "" });
   const [photoBusy, setPhotoBusy] = useState(false);
   const [step, setStep] = useState(0);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    stepHeading.current?.focus({ preventScroll: true });
+    stepHeading.current?.scrollIntoView?.({ block: "start", behavior: "instant" });
+  }, [step]);
   const [errors, setErrors] = useState<PersonErrs>({});
   const set = <K extends keyof Person>(k: K, v: Person[K]) => setP((prev) => ({ ...prev, [k]: v }));
   const isNew = !data.people.some((x) => x.id === initial.id);
@@ -127,8 +133,10 @@ export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onS
   };
 
   const go = (next: number) => {
-    const all = validatePerson(forSave());
-    const e = stepErrors(all, step);
+    if (next < 0 || next >= STEPS.length) return;
+    // Optional measurements and blood must never trap the user between steps.
+    // Validate the full record only on Save, then show its exact field errors.
+    const e = step === 0 ? stepErrors(validatePerson(forSave()), 0) : {};
     setErrors(e);
     if (next > step && hasErrors(e)) return;
     setStep(next);
@@ -170,7 +178,8 @@ export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onS
 
       <FormErrorSummary errors={errors} />
 
-      <Section title={STEPS[step]}>
+      <Section>
+        <h2 ref={stepHeading} tabIndex={-1} className="mb-5 scroll-mt-24 text-xl font-semibold outline-none">{STEPS[step]} <span className="text-sm font-normal">— etapa {step + 1} de {STEPS.length}</span></h2>
         <div className="grid gap-5 sm:grid-cols-2">
           {step === 0 && (
             <>

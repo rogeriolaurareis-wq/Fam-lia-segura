@@ -2,7 +2,7 @@ import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, it, expect, vi } from "vitest";
 import { StoreProvider } from "@/lib/storage/store";
 import { makeDemoData } from "@/lib/demo";
-import { PersonForm } from "@/routes/familia";
+import { FamilyPage, PersonForm } from "@/routes/familia";
 import { serialize, STORAGE_KEY, parseEnvelope } from "@/lib/storage/persist";
 import { emptyData, type Person } from "@/lib/domain/types";
 import { PersonPhoto, preparePersonPhoto } from "@/components/fs/PersonPhoto";
@@ -50,4 +50,51 @@ it("permite remover a foto e rejeita arquivo não suportado sem perder a foto an
   fireEvent.click(screen.getByRole("button", { name: "Remover foto" }));
   expect(change).toHaveBeenCalledWith("");
   await expect(preparePersonPhoto(new File(["bad"], "x.txt", { type: "text/plain" }))).rejects.toThrow();
+});
+
+it("terceira pessoa avança mesmo com medida opcional incompleta e recebe erro específico ao salvar", () => {
+  localStorage.setItem(STORAGE_KEY, serialize({ ...emptyData(), people: [fixture(), fixture()] }));
+  const save = vi.fn();
+  render(<StoreProvider><PersonForm initial={{ ...fixture(), name: "Terceira pessoa" }} onSave={save} onCancel={() => {}} /></StoreProvider>);
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  fireEvent.change(screen.getByLabelText(/Peso/), { target: { value: "70," } });
+  fireEvent.change(screen.getByLabelText(/Grupo sanguíneo/), { target: { value: "O" } });
+  fireEvent.change(screen.getByLabelText(/Fator Rh/), { target: { value: "positivo" } });
+  fireEvent.click(screen.getByLabelText(/Confirmo que este grupo/));
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  expect(screen.getByLabelText(/Alergias/)).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+  expect(save).toHaveBeenCalledWith(expect.objectContaining({ name: "Terceira pessoa", abo: "O", rh: "positivo", weightKg: 70 }));
+});
+it("valor inválido de peso não bloqueia próxima etapa e é apontado ao salvar", () => {
+  const save = vi.fn();
+  render(<StoreProvider><PersonForm initial={fixture()} onSave={save} onCancel={() => {}} /></StoreProvider>);
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  fireEvent.change(screen.getByLabelText(/Peso/), { target: { value: "abc" } });
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  expect(screen.getByLabelText(/Alergias/)).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+  expect(save).not.toHaveBeenCalled();
+  expect(screen.getAllByText(/Peso deve ser/).length).toBeGreaterThan(0);
+});
+
+it("posiciona adicionar abaixo dos cadastros e salva uma terceira pessoa pelo fluxo completo", async () => {
+  localStorage.setItem(STORAGE_KEY, serialize({ ...emptyData(), people: [{ ...fixture(), name: "Primeira" }, { ...fixture(), name: "Segunda" }] }));
+  render(<StoreProvider><FamilyPage /></StoreProvider>);
+  const add = await screen.findByRole("button", { name: "Adicionar pessoa" });
+  expect(screen.getByRole("heading", { name: "Segunda" }).compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(add);
+  fireEvent.change(screen.getByLabelText("Nome ou apelido"), { target: { value: "Terceira" } });
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  fireEvent.change(screen.getByLabelText(/Grupo sanguíneo/), { target: { value: "AB" } });
+  fireEvent.change(screen.getByLabelText(/Fator Rh/), { target: { value: "negativo" } });
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  expect(screen.getByLabelText(/Alergias/)).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: /Próxima etapa/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+  expect(await screen.findByRole("heading", { name: "Terceira" })).toBeDefined();
+  const saved = parseEnvelope(localStorage.getItem(STORAGE_KEY)!);
+  expect(saved.status).toBe("ok");
+  if (saved.status === "ok") expect(saved.data.people).toHaveLength(3);
 });

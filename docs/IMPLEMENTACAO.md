@@ -56,3 +56,13 @@ Foto reduzida localmente (máximo 640 px e 400 mil caracteres), sinais corporais
 são preservados no backup. Vínculo, responsável e contato são editados em M04.
 Teste real de navegador cobriu cadastro da segunda pessoa e avanço após selecionar sangue.
 Testes automatizados cobrem também confirmação, registro antigo e foto em exportação.
+
+## Terceiro cadastro e posição do botão — 13/11/2026
+
+Adicionar pessoa aparece depois de todos os cartões. Navegação entre etapas não é
+bloqueada por medidas opcionais; erros continuam validados ao salvar, com retorno
+à etapa e indicação do campo. Título da etapa recebe foco e rolagem automática.
+Teste real de navegador salvou a terceira pessoa após selecionar AB/Rh negativo
+sem confirmação (persistido como Não sei). 31 testes automatizados passaram.
+A causa exata no aparelho do usuário não foi reproduzida; foram removidas as
+barreiras opcionais e verificado o fluxo completo com duas pessoas já salvas.
