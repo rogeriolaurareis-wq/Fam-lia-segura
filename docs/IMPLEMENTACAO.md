@@ -66,3 +66,29 @@ Teste real de navegador salvou a terceira pessoa após selecionar AB/Rh negativo
 sem confirmação (persistido como Não sei). 31 testes automatizados passaram.
 A causa exata no aparelho do usuário não foi reproduzida; foram removidas as
 barreiras opcionais e verificado o fluxo completo com duas pessoas já salvas.
+
+## Navegação sequencial — 13/11/2026
+
+Rodapé de cada módulo oferece link direto ao seguinte, na ordem M01–M10.
+No M10, retorna ao painel. O atalho não salva formulários automaticamente;
+o aviso pede salvar as alterações antes de avançar.
+
+Foto opcional também no cadastro de animais, com redução local, substituição e remoção.
+A imagem aparece no cartão do pet e acompanha exportação e backup manual.
+
+Localização da moradia é obtida sob toque e permissão, sem rastreamento contínuo.
+Consulta reversa pontual ao Nominatim público para esta prévia privada de baixo uso,
+com atribuição, aviso prévio do destino, sem credenciais e sem nomes dos moradores.
+Antes de escalar, substituir por provedor contratado ou instância própria, com controle
+global de taxa/cache. Internet é necessária para o nome da rua; GPS pode retornar
+coordenadas sem rede. Permissão negada, timeout e falha do serviço mantêm entrada manual.
+
+## Moradia — salvamento e gráfico
+
+Salvamento automático após pausa de 450 ms e ao sair do campo; mantém botão manual
+e informa sucesso/falha na própria tela. Falha de armazenamento não descarta formulário
+nem é apresentada como gravação concluída. Gráfico resume nove perguntas em riscos
+informados, não observados e pendentes, sem inferir classificação técnica de segurança.
+35 testes passaram; teste real de navegador confirmou endereço e resposta após recarga
+e navegação direta de Moradia para Rede. Localização automática foi testada com
+permissão e serviço simulados, sem obter localização real do usuário.

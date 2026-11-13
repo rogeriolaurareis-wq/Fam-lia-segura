@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Download, FlaskConical, Menu, Wifi, WifiOff, CloudOff, Loader2, HardDrive } from "lucide-react";
+import { ArrowRight, Download, FlaskConical, Menu, Wifi, WifiOff, CloudOff, Loader2, HardDrive } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -214,6 +214,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <main id="conteudo" className={cn("mx-auto w-full max-w-5xl flex-1 px-4 pt-6 sm:px-6 lg:pb-12", isHome ? "pb-12" : "pb-32")}>
             <StorageBanners />
             {children}
+            <NextModule />
           </main>
         </div>
       </div>
@@ -250,4 +251,21 @@ function Brand({ small }: { small?: boolean }) {
       </span>
     </Link>
   );
+}
+
+function NextModule() {
+  const path = useRouterState({ select: s => s.location.pathname });
+  const modules = NAV.filter(item => item.code);
+  const index = modules.findIndex(item => item.to === path.replace(/\/$/, ""));
+  if (index < 0) return null;
+  const next = modules[index + 1];
+  return <nav aria-label="Avançar entre módulos" className="mt-8 border-t pt-5">
+    <p className="mb-3 text-sm text-muted-foreground">Salve as alterações antes de avançar.</p>
+    <Button asChild size="lg" className="h-auto min-h-12 w-full whitespace-normal text-left sm:w-auto">
+      <Link to={next?.to ?? "/"}>
+        <span>{next ? `Próximo módulo: ${next.label} (${next.code})` : "Voltar ao painel"}</span>
+        <ArrowRight aria-hidden className="shrink-0" />
+      </Link>
+    </Button>
+  </nav>;
 }

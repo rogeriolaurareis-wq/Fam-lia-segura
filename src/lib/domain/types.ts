@@ -77,6 +77,7 @@ export const SIZE_LABEL: Record<Exclude<AnimalSize, "">, string> = {
 };
 
 export interface Animal extends Base {
+  photoDataUrl?: string;
   name: string;
   species: Species;
   speciesOther: string;
@@ -137,6 +138,7 @@ export const RISK_SHORT: Record<RiskKey, string> = {
 };
 
 export interface Home {
+  location?: { latitude: number; longitude: number; accuracy: number; capturedAt: string };
   address: string;
   reference: string;
   type: "" | "casa" | "apartamento" | "sobrado" | "outro";

@@ -41,6 +41,7 @@ export function validatePerson(p: Person, today: Date = new Date()): Errs<Person
 
 export function validateAnimal(a: Animal): Errs<Animal> {
   const e: Errs<Animal> = {};
+  if (a.photoDataUrl && (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(a.photoDataUrl) || a.photoDataUrl.length > 400_000)) e.photoDataUrl = "Foto inválida ou muito grande.";
   if (!a.name.trim()) e.name = "Informe o nome do animal.";
   if (a.species === "outro" && !a.speciesOther.trim()) e.speciesOther = "Descreva a espécie.";
   if (badOptionalNumber(a.weightKg, 0, 2000)) e.weightKg = "Peso deve ser um número maior que 0.";

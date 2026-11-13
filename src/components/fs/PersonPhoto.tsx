@@ -21,12 +21,12 @@ export async function preparePersonPhoto(file: File): Promise<string> {
     return result;
   } finally { bitmap.close(); }
 }
-export function PersonPhoto({ value, onChange, onBusyChange }: { value: string; onChange: (v: string) => void; onBusyChange?: (busy: boolean) => void }) {
+export function PersonPhoto({ value, onChange, onBusyChange, label = "Foto da pessoa" }: { label?: string; value: string; onChange: (v: string) => void; onBusyChange?: (busy: boolean) => void }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const request = useRef(0);
   return <div className="space-y-3">
-    <FieldShell label="Foto da pessoa" optional hint="JPG, PNG ou WebP. A foto é reduzida neste aparelho e acompanha o backup quando você o guardar.">
+    <FieldShell label={label} optional hint="JPG, PNG ou WebP. A foto é reduzida neste aparelho e acompanha o backup quando você o guardar.">
       {({ id }) => <input id={id} type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} className="field-control" onChange={async e => {
         const file = e.target.files?.[0]; e.target.value = ""; if (!file) return;
         const current = ++request.current; setBusy(true); onBusyChange?.(true); setError("");
