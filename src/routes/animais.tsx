@@ -74,7 +74,9 @@ function AnimalsPage() {
                   {a.photoDataUrl && <img src={a.photoDataUrl} alt={`Foto de ${a.name}`} className="mb-4 size-28 rounded-xl object-cover" />}
                   <DL
                     items={[
-                      ["Identificação", a.identification],
+                      ["Cor ou cores", a.color ?? ""],
+                      ["Pelagem ou cobertura", a.coatType ?? ""],
+                      ["Sinais particulares", a.identification],
                       ["Microchip", a.microchip],
                       ["Comportamento", a.behavior],
                       ["Restrição de dieta", a.dietRestriction],
@@ -113,7 +115,7 @@ function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a
     <form onSubmit={submit} noValidate className="space-y-6">
       <PageHeader code="M02" title={isNew ? "Novo animal" : `Editar: ${initial.name}`} description="Só o nome é obrigatório." />
       <FormErrorSummary errors={errors} />
-      <Section title="Identificação">
+      <Section title="Identificação do pet" description="Foto e características ajudam a reconhecer o animal. Todos esses detalhes são opcionais.">
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="sm:col-span-2"><PersonPhoto label="Foto do pet" value={a.photoDataUrl ?? ""} onChange={v => set("photoDataUrl", v)} onBusyChange={setPhotoBusy} /></div>
           <TextField label="Nome" value={a.name} onChange={(v) => set("name", v)} error={errors.name} maxLength={60} />
@@ -124,7 +126,9 @@ function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a
           <TextField label="Idade" optional hint="Ex.: 3 anos, filhote" value={a.ageText} onChange={(v) => set("ageText", v)} />
           <NumberField label="Peso" optional suffix="kg" value={a.weightKg} onChange={(v) => set("weightKg", v)} error={errors.weightKg} />
           <SelectField label="Porte" optional value={a.size} onChange={(v) => set("size", v)} placeholder="Não informar" options={[{ value: "pequeno", label: "Pequeno" }, { value: "medio", label: "Médio" }, { value: "grande", label: "Grande" }]} />
-          <TextField label="Identificação visual" optional hint="Ex.: coleira, plaquinha, manchas" value={a.identification} onChange={(v) => set("identification", v)} />
+          <TextField label="Cor ou cores" optional hint="Ex.: preto e branco, caramelo, cinza rajado. Descreva também as manchas." value={a.color ?? ""} onChange={(v) => set("color", v)} maxLength={200} />
+          <TextField label="Tipo de pelagem ou cobertura" optional hint="Ex.: pelo curto e liso, longo, encaracolado, sem pelos, penas ou escamas." value={a.coatType ?? ""} onChange={(v) => set("coatType", v)} maxLength={200} />
+          <TextAreaField label="Sinais particulares e identificação" optional hint="Ex.: mancha branca na pata, orelha dobrada, cicatriz, coleira ou plaquinha." value={a.identification} onChange={(v) => set("identification", v)} />
           <TextField label="Microchip" optional value={a.microchip} onChange={(v) => set("microchip", v)} error={errors.microchip} maxLength={20} />
         </div>
       </Section>

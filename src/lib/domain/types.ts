@@ -78,6 +78,8 @@ export const SIZE_LABEL: Record<Exclude<AnimalSize, "">, string> = {
 
 export interface Animal extends Base {
   photoDataUrl?: string;
+  color?: string;
+  coatType?: string;
   name: string;
   species: Species;
   speciesOther: string;

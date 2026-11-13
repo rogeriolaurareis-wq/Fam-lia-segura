@@ -92,3 +92,7 @@ informados, não observados e pendentes, sem inferir classificação técnica de
 35 testes passaram; teste real de navegador confirmou endereço e resposta após recarga
 e navegação direta de Moradia para Rede. Localização automática foi testada com
 permissão e serviço simulados, sem obter localização real do usuário.
+
+Identificação dos animais: foto, cor(es), tipo de pelagem/cobertura e sinais particulares
+no cadastro e no cartão. Campos opcionais; registros antigos mantidos, sem exigir
+novo preenchimento. Dados acompanham o mesmo armazenamento e backup do cadastro.
