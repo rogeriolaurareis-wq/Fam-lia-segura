@@ -22,9 +22,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Esta página não existe ou foi movida.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Esta página não existe ou foi movida.</p>
         <div className="mt-6">
           <Link
             to="/"
@@ -52,7 +50,8 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           Esta página não carregou
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Algo deu errado. Seus dados salvos neste aparelho não foram apagados. Tente de novo ou volte ao painel.
+          Algo deu errado. Seus dados salvos neste aparelho não foram apagados. Tente de novo ou
+          volte ao painel.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -84,9 +83,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#34363b" },
       { title: "Família Segura — preparação familiar para emergências" },
-      { name: "description", content: "Organize família, animais, reservas e plano de saída para emergências. Dados guardados só neste aparelho." },
+      {
+        name: "description",
+        content:
+          "Organize família, animais, reservas e plano de saída para emergências. Dados guardados só neste aparelho.",
+      },
       { property: "og:title", content: "Família Segura" },
-      { property: "og:description", content: "Preparação familiar para emergências, com dados guardados só neste aparelho." },
+      {
+        property: "og:description",
+        content: "Preparação familiar para emergências, com dados guardados só neste aparelho.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -95,7 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
     ],
   }),
   shellComponent: RootShell,

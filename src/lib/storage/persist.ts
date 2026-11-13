@@ -1,4 +1,5 @@
 import { emptyData, type AppData } from "@/lib/domain/types";
+import { normalizeShopping } from "@/lib/domain/shopping";
 
 /**
  * Versioned local persistence (browser localStorage). Nothing leaves the device.
@@ -10,7 +11,7 @@ import { emptyData, type AppData } from "@/lib/domain/types";
  */
 export const STORAGE_KEY = "familia-segura:dados";
 export const BACKUP_PREFIX = "familia-segura:backup:";
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export const APP_ID = "familia-segura";
 
 export interface Envelope {
@@ -35,7 +36,7 @@ export interface StorageLike {
 
 type Migration = (data: Record<string, unknown>) => Record<string, unknown>;
 /** migrations[n] upgrades schema n -> n+1. */
-const MIGRATIONS: Record<number, Migration> = {};
+const MIGRATIONS: Record<number, Migration> = { 1: (data) => ({ ...data }) };
 
 const ARRAY_KEYS: (keyof AppData)[] = [
   "people",
@@ -54,7 +55,8 @@ const OBJECT_KEYS: (keyof AppData)[] = ["home", "water", "scenario", "exitPlan",
 
 /** Validates shape and fills missing sections with defaults. Throws on wrong types. */
 export function normalizeData(input: unknown): AppData {
-  if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("dados não são um objeto");
+  if (!input || typeof input !== "object" || Array.isArray(input))
+    throw new Error("dados não são um objeto");
   const src = input as Record<string, unknown>;
   const base = emptyData();
   const out = { ...base } as Record<string, unknown>;
@@ -62,7 +64,9 @@ export function normalizeData(input: unknown): AppData {
     if (src[k] === undefined) continue;
     if (!Array.isArray(src[k])) throw new Error(`seção "${k}" deveria ser uma lista`);
     const arr = src[k] as unknown[];
-    if (arr.some((r) => !r || typeof r !== "object" || typeof (r as { id?: unknown }).id !== "string"))
+    if (
+      arr.some((r) => !r || typeof r !== "object" || typeof (r as { id?: unknown }).id !== "string")
+    )
       throw new Error(`registro inválido em "${k}"`);
     out[k] = arr;
   }
@@ -72,6 +76,7 @@ export function normalizeData(input: unknown): AppData {
     if (!v || typeof v !== "object" || Array.isArray(v)) throw new Error(`seção "${k}" inválida`);
     out[k] = { ...(base[k] as object), ...(v as object) };
   }
+  out["shopping"] = normalizeShopping(src["shopping"]);
   return out as unknown as AppData;
 }
 
@@ -80,10 +85,18 @@ export function parseEnvelope(raw: string): LoadResult {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { status: "corrupt", raw, reason: "O conteúdo salvo não pôde ser lido (formato inválido)." };
+    return {
+      status: "corrupt",
+      raw,
+      reason: "O conteúdo salvo não pôde ser lido (formato inválido).",
+    };
   }
   if (!parsed || typeof parsed !== "object" || (parsed as Envelope).app !== APP_ID)
-    return { status: "corrupt", raw, reason: "O conteúdo salvo não é reconhecido como dados do Família Segura." };
+    return {
+      status: "corrupt",
+      raw,
+      reason: "O conteúdo salvo não é reconhecido como dados do Família Segura.",
+    };
   const env = parsed as Envelope;
   const version = Number(env.schemaVersion);
   if (!Number.isInteger(version) || version < 1)
@@ -104,17 +117,25 @@ export function parseEnvelope(raw: string): LoadResult {
       ...(version < SCHEMA_VERSION ? { migratedFrom: version } : {}),
     };
   } catch (e) {
-    return { status: "corrupt", raw, reason: `Dados com estrutura inesperada: ${(e as Error).message}.` };
+    return {
+      status: "corrupt",
+      raw,
+      reason: `Dados com estrutura inesperada: ${(e as Error).message}.`,
+    };
   }
 }
 
 export function loadData(storage: StorageLike | null): LoadResult {
-  if (!storage) return { status: "unavailable", reason: "Armazenamento local indisponível neste navegador." };
+  if (!storage)
+    return { status: "unavailable", reason: "Armazenamento local indisponível neste navegador." };
   let raw: string | null;
   try {
     raw = storage.getItem(STORAGE_KEY);
   } catch {
-    return { status: "unavailable", reason: "O navegador bloqueou o acesso ao armazenamento local." };
+    return {
+      status: "unavailable",
+      reason: "O navegador bloqueou o acesso ao armazenamento local.",
+    };
   }
   if (raw === null) return { status: "empty", data: emptyData() };
   const result = parseEnvelope(raw);
@@ -126,13 +147,22 @@ export function loadData(storage: StorageLike | null): LoadResult {
 }
 
 export function serialize(data: AppData, now: Date = new Date()): string {
-  const env: Envelope = { app: APP_ID, schemaVersion: SCHEMA_VERSION, savedAt: now.toISOString(), data };
+  const env: Envelope = {
+    app: APP_ID,
+    schemaVersion: SCHEMA_VERSION,
+    savedAt: now.toISOString(),
+    data,
+  };
   return JSON.stringify(env);
 }
 
 export type SaveResult = { ok: true; savedAt: string } | { ok: false; reason: string };
 
-export function saveData(storage: StorageLike | null, data: AppData, now: Date = new Date()): SaveResult {
+export function saveData(
+  storage: StorageLike | null,
+  data: AppData,
+  now: Date = new Date(),
+): SaveResult {
   if (!storage) return { ok: false, reason: "Armazenamento local indisponível." };
   try {
     storage.setItem(STORAGE_KEY, serialize(data, now));
@@ -148,7 +178,12 @@ export function saveData(storage: StorageLike | null, data: AppData, now: Date =
   }
 }
 
-export function backupRaw(storage: StorageLike, raw: string, label: string, now: Date = new Date()): string | null {
+export function backupRaw(
+  storage: StorageLike,
+  raw: string,
+  label: string,
+  now: Date = new Date(),
+): string | null {
   const key = `${BACKUP_PREFIX}${label}:${now.toISOString()}`;
   try {
     storage.setItem(key, raw);
@@ -159,9 +194,17 @@ export function backupRaw(storage: StorageLike, raw: string, label: string, now:
 }
 
 /** Only called after explicit user confirmation. Backs up the unreadable value first. */
-export function resetAfterBackup(storage: StorageLike, raw: string, now: Date = new Date()): SaveResult {
+export function resetAfterBackup(
+  storage: StorageLike,
+  raw: string,
+  now: Date = new Date(),
+): SaveResult {
   const key = backupRaw(storage, raw, "ilegivel", now);
-  if (!key) return { ok: false, reason: "Não foi possível guardar a cópia de segurança; nada foi alterado." };
+  if (!key)
+    return {
+      ok: false,
+      reason: "Não foi possível guardar a cópia de segurança; nada foi alterado.",
+    };
   return saveData(storage, emptyData(), now);
 }
 

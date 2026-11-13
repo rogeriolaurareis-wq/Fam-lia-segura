@@ -1,29 +1,30 @@
-# Welcome to your Lovable project
+# Família Segura
 
-This project was built with [Lovable](https://lovable.dev).
+Aplicativo de preparação familiar. Base web recuperada do projeto existente no Lovable e desenvolvida neste repositório, sem depender de créditos de geração.
 
-## Build with Lovable
+## Desenvolvimento
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Com Node.js 24 e npm:
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+git clone https://github.com/rogeriolaurareis-wq/Fam-lia-segura.git
+cd Fam-lia-segura
+git checkout codex/lista-de-compras
+npm ci
 npm run dev
 ```
 
-## Built with
+Verificações: `npm run typecheck`, `npm test` e `npm run build`.
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+## Primeira evolução
+
+Em Lista de compras, escolha produtos por categoria, informe pessoas e dias, ajuste quantidades e copie o texto para o WhatsApp. Saldo, compra e uso são opcionais e manuais. Não há validade ou lote obrigatório. Quantidades são sugestões ajustáveis em revisão, sem validação de suficiência nutricional.
+
+## Estado do produto
+
+Protótipo web local: não é o APK Android atualizado e não é serviço de resgate. Ainda não há login/recuperação em nuvem, rede residencial conectada, chat remoto ou download regional de mapas. O projeto original no Lovable não é alterado automaticamente por esta branch.
+
+Dados ficam neste navegador. Ao mudar de endereço, use a exportação/importação da versão anterior: dados do domínio Lovable não aparecem automaticamente aqui. Use dados fictícios enquanto proteção e acesso não forem homologados.
+
+Detalhes e limitações: [docs/IMPLEMENTACAO.md](docs/IMPLEMENTACAO.md).
+

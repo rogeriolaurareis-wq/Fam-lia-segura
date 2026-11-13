@@ -1,5 +1,5 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "familia-segura",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "test:watch": "vitest"
   },
   "overrides": {

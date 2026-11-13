@@ -15,7 +15,7 @@ export default defineConfig({
       // Offline shell: precache hashed client assets, NetworkFirst for HTML navigations.
       // Registration happens only in src/lib/pwa.ts (guarded: never in dev/preview/iframe).
       VitePWA({
-        outDir: "dist/client",
+        outDir: ".output/public",
         strategies: "generateSW",
         registerType: "autoUpdate",
         injectRegister: null,
@@ -50,3 +50,4 @@ export default defineConfig({
     server: { entry: "server" },
   },
 });
+

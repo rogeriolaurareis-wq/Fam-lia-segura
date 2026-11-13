@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { toast } from "sonner";
 
 import { removeWithLinks } from "@/lib/domain/links";
@@ -82,13 +91,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const update = useCallback((fn: (d: AppData) => AppData) => {
     const p = phaseRef.current;
     if (p === "blocked" || p === "loading") {
-      toast.error("Alteração não salva: os dados salvos não puderam ser lidos. Veja o aviso no topo.");
+      toast.error(
+        "Alteração não salva: os dados salvos não puderam ser lidos. Veja o aviso no topo.",
+      );
       return false;
     }
     const next = fn(dataRef.current);
-    dataRef.current = next;
-    setData(next);
-    if (p === "memory") return true;
+    if (p === "memory") {
+      dataRef.current = next;
+      setData(next);
+      return true;
+    }
     const res = saveData(getBrowserStorage(), next);
     if (res.ok) {
       setSavedAt(res.savedAt);
@@ -96,7 +109,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } else {
       setSaveError(res.reason);
       toast.error(res.reason);
+      return false;
     }
+    dataRef.current = next;
+    setData(next);
     return true;
   }, []);
 
@@ -105,13 +121,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       update((d) => {
         const list = d[key] as unknown as { id: string }[];
         const exists = list.some((r) => r.id === record.id);
-        const nextList = exists ? list.map((r) => (r.id === record.id ? record : r)) : [...list, record];
+        const nextList = exists
+          ? list.map((r) => (r.id === record.id ? record : r))
+          : [...list, record];
         return { ...d, [key]: nextList };
       }),
     [update],
   );
 
-  const remove = useCallback((key: CollectionKey, id: string) => update((d) => removeWithLinks(d, key, id)), [update]);
+  const remove = useCallback(
+    (key: CollectionKey, id: string) => update((d) => removeWithLinks(d, key, id)),
+    [update],
+  );
 
   const resetBlocked = useCallback(() => {
     const storage = getBrowserStorage();
@@ -123,7 +144,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } else toast.error(res.reason);
   }, [blocked, applyLoad]);
 
-  const exportText = useCallback(() => (blocked ? blocked.raw : serialize(dataRef.current)), [blocked]);
+  const exportText = useCallback(
+    () => (blocked ? blocked.raw : serialize(dataRef.current)),
+    [blocked],
+  );
 
   const importText = useCallback(
     (raw: string) => {
@@ -147,8 +171,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setPhase("ready");
       setBlocked(null);
       phaseRef.current = "ready";
-      update(() => r.data);
-      return { ok: true, message: "Cópia importada. O conteúdo anterior foi guardado como cópia de segurança." };
+      if (!update(() => r.data))
+        return {
+          ok: false,
+          message:
+            "Não foi possível salvar a cópia importada. Os dados anteriores foram preservados.",
+        };
+      return {
+        ok: true,
+        message: "Cópia importada. O conteúdo anterior foi guardado como cópia de segurança.",
+      };
     },
     [update],
   );
@@ -158,9 +190,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const hasDemo = useMemo(() => {
     const d = data;
-    return [d.people, d.animals, d.contacts, d.supplies, d.equipment, d.vehicles, d.destinations, d.kit, d.treatments, d.notices].some((l) =>
-      (l as { fictitious?: boolean }[]).some((r) => r.fictitious),
-    );
+    return [
+      d.people,
+      d.animals,
+      d.contacts,
+      d.supplies,
+      d.equipment,
+      d.vehicles,
+      d.destinations,
+      d.kit,
+      d.treatments,
+      d.notices,
+    ].some((l) => (l as { fictitious?: boolean }[]).some((r) => r.fictitious));
   }, [data]);
 
   const value: StoreValue = {
@@ -186,14 +227,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 function mergeDemo(d: AppData, demo: Partial<AppData>): AppData {
   const out = { ...d } as Record<string, unknown>;
   for (const [k, v] of Object.entries(demo)) {
-    if (Array.isArray(v)) out[k] = [...((d as unknown as Record<string, unknown[]>)[k] ?? []), ...v];
+    if (Array.isArray(v))
+      out[k] = [...((d as unknown as Record<string, unknown[]>)[k] ?? []), ...v];
   }
   return out as unknown as AppData;
 }
 
 export function stripDemo(d: AppData): AppData {
   let next = d;
-  const keys: CollectionKey[] = ["people", "animals", "contacts", "supplies", "equipment", "vehicles", "destinations", "kit", "treatments", "notices"];
+  const keys: CollectionKey[] = [
+    "people",
+    "animals",
+    "contacts",
+    "supplies",
+    "equipment",
+    "vehicles",
+    "destinations",
+    "kit",
+    "treatments",
+    "notices",
+  ];
   for (const k of keys) {
     for (const r of next[k] as { id: string; fictitious?: boolean }[]) {
       if (r.fictitious) next = removeWithLinks(next, k, r.id);

@@ -1,4 +1,5 @@
 // Família Segura — domain model (local-only, versioned in src/lib/storage/persist.ts).
+import { emptyShopping, type ShoppingPlan } from "./shopping";
 
 export type Tri = "sim" | "nao" | "nao_sei";
 export const TRI_LABEL: Record<Tri, string> = { sim: "Sim", nao: "Não", nao_sei: "Não sei" };
@@ -329,6 +330,7 @@ export interface Notice extends Base {
 }
 
 export interface AppData {
+  shopping: ShoppingPlan;
   people: Person[];
   animals: Animal[];
   home: Home;
@@ -353,6 +355,7 @@ export type CollectionKey = {
 
 export function emptyData(): AppData {
   return {
+    shopping: emptyShopping(),
     people: [],
     animals: [],
     home: {
