@@ -1,0 +1,227 @@
+/*
+ * Tailwind v4 entry: config lives here, with no tailwind.config.js or PostCSS plugin.
+ * Fonts are self-hosted (npm @fontsource) so they keep working when the app reopens offline.
+ */
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "@fontsource/atkinson-hyperlegible/400.css";
+@import "@fontsource/atkinson-hyperlegible/700.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Família Segura — design system (approved graphite theme).
+ * Neutral graphite surfaces, white informative text, orange icons/borders/focus.
+ * Never put white text on orange: orange is for icons, borders and focus only.
+ * Red (--sos) is reserved for SOCORRO / danger; green (--safe) for "Está tudo bem".
+ * Colour never carries state alone: labels + distinct symbols always accompany it.
+ */
+
+@theme inline {
+  --font-sans: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-elevated: var(--elevated);
+  --color-elevated-hover: var(--elevated-hover);
+  --color-sos-light: var(--sos-light);
+  --color-safe-light: var(--safe-light);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-sos: var(--sos);
+  --color-sos-foreground: var(--sos-foreground);
+  --color-sos-soft: var(--sos-soft);
+  --color-safe: var(--safe);
+  --color-safe-foreground: var(--safe-foreground);
+  --color-attention: var(--attention);
+  --color-attention-foreground: var(--attention-foreground);
+  --color-attention-soft: var(--attention-soft);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --shadow-soft: var(--shadow-soft-value);
+  --shadow-lift: var(--shadow-lift-value);
+}
+
+:root {
+  color-scheme: dark;
+  --radius: 0.875rem;
+  --background: #34363b;
+  --foreground: #ffffff;
+  --card: #45484f;
+  --card-foreground: #ffffff;
+  --popover: #45484f;
+  --popover-foreground: #ffffff;
+  --elevated: #50545b;
+  --elevated-hover: #5c6068;
+  /* Orange: icons, borders, focus. Dark text only if something sits on orange. */
+  --primary: #ff981f;
+  --primary-foreground: #1f2024;
+  --primary-soft: #50545b;
+  --info: #8cc4ff;
+  --info-foreground: #1f2024;
+  --info-soft: #3f4652;
+  --secondary: #50545b;
+  --secondary-foreground: #ffffff;
+  --muted: #50545b;
+  --muted-foreground: #ffffff;
+  --accent: #5c6068;
+  --accent-foreground: #ffffff;
+  /* Red only for SOCORRO / danger */
+  --sos: #e60020;
+  --sos-foreground: #ffffff;
+  --sos-soft: #5a2b30;
+  --sos-light: #ff5a6a;
+  --destructive: var(--sos);
+  --destructive-foreground: var(--sos-foreground);
+  --safe: #00851e;
+  --safe-foreground: #ffffff;
+  --safe-light: #3ddc5a;
+  /* Attention: validation, pending, expired (icons/borders; text stays white) */
+  --attention: #ffc24d;
+  --attention-foreground: #1f2024;
+  --attention-soft: #4d4433;
+  --border: #6b6f77;
+  --input: #a0a4ab;
+  --ring: #ff981f;
+  --chart-1: #ff981f;
+  --chart-2: #8cc4ff;
+  --chart-3: #3ddc5a;
+  --chart-4: #ffc24d;
+  --chart-5: #c9ccd1;
+  --sidebar: #2e3035;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #50545b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #45484f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #6b6f77;
+  --sidebar-ring: #ff981f;
+  --tape-dark: #121316;
+  --tape-light: #ff981f;
+  --shadow-soft-value: 0 1px 2px rgb(0 0 0 / 0.25), 0 4px 16px -6px rgb(0 0 0 / 0.35);
+  --shadow-lift-value: 0 2px 4px rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.5);
+  --gradient-welcome: linear-gradient(180deg, #3b3d43, #34363b);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-size: 106.25%; /* 17px base for legibility */
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  ::placeholder {
+    color: var(--color-foreground);
+    opacity: 1;
+  }
+
+  /* Ordinary icons are orange; explicit text-* classes on an icon still win. */
+  :where(svg.lucide) {
+    color: var(--color-primary);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility bg-welcome {
+  background-image: var(--gradient-welcome);
+}
+
+/* Thin black/orange isolation-tape line (top and bottom of the shell only). */
+@utility hazard-tape {
+  background-image: repeating-linear-gradient(-45deg, var(--tape-dark) 0 10px, var(--tape-light) 10px 20px);
+}
+
+@utility field-control {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-input);
+  background-color: var(--color-card);
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  color: var(--color-foreground);
+  &:focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 1px;
+  }
+  &[aria-invalid="true"] {
+    border-color: var(--color-attention);
+    border-width: 2px;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
