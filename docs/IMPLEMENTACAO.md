@@ -96,3 +96,7 @@ permissão e serviço simulados, sem obter localização real do usuário.
 Identificação dos animais: foto, cor(es), tipo de pelagem/cobertura e sinais particulares
 no cadastro e no cartão. Campos opcionais; registros antigos mantidos, sem exigir
 novo preenchimento. Dados acompanham o mesmo armazenamento e backup do cadastro.
+
+Cadastro em sequência: Salvar e adicionar outra pessoa/pet persiste o atual e abre
+um formulário vazio com novo ID. Em falha de gravação, mantém o formulário anterior.
+O botão Salvar normal continua voltando à lista.

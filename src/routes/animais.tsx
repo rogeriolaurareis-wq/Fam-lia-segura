@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PawPrint } from "lucide-react";
 
@@ -36,7 +36,7 @@ function AnimalsPage() {
   if (editing)
     return (
       <Ready>
-        <AnimalForm initial={editing} onCancel={() => setEditing(null)} onSave={(a) => upsert("animals", { ...a, updatedAt: nowIso() }) && setEditing(null)} />
+        <AnimalForm key={editing.id} initial={editing} onCancel={() => setEditing(null)} onSave={(a, addAnother) => { if (upsert("animals", { ...a, updatedAt: nowIso() })) setEditing(addAnother ? newAnimal() : null); }} />
       </Ready>
     );
 
@@ -95,20 +95,27 @@ function AnimalsPage() {
   );
 }
 
-function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a: Animal) => void; onCancel: () => void }) {
+function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a: Animal, addAnother?: boolean) => void; onCancel: () => void }) {
   const { data } = useStore();
   const [a, setA] = useState(initial);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const saveAndContinue = useRef(false);
   const [errors, setErrors] = useState<Errs<Animal>>({});
   const set = <K extends keyof Animal>(k: K, v: Animal[K]) => setA((p) => ({ ...p, [k]: v }));
   const isNew = !data.animals.some((x) => x.id === initial.id);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    const addAnother = saveAndContinue.current;
+    saveAndContinue.current = false;
     if (photoBusy) return;
     const errs = validateAnimal(a);
     setErrors(errs);
-    if (!hasErrors(errs)) onSave({ ...a, name: a.name.trim() });
+    if (!hasErrors(errs)) {
+      const record = { ...a, name: a.name.trim() };
+      if (addAnother) onSave(record, true);
+      else onSave(record);
+    }
   };
 
   return (
@@ -155,7 +162,7 @@ function AnimalForm({ initial, onSave, onCancel }: { initial: Animal; onSave: (a
           </div>
         </div>
       </Section>
-      <div className="flex flex-wrap gap-2 border-t pt-4"><Button type="submit" disabled={photoBusy}>{photoBusy ? "Preparando foto…" : "Salvar"}</Button><Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button></div>
+      <div className="flex flex-wrap gap-2 border-t pt-4"><Button type="submit" onClick={() => { saveAndContinue.current = false; }} disabled={photoBusy}>{photoBusy ? "Preparando foto…" : "Salvar"}</Button><Button type="submit" variant="outline" onClick={() => { saveAndContinue.current = true; }} disabled={photoBusy}>Salvar e adicionar outro pet</Button><Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button></div>
     </form>
   );
 }

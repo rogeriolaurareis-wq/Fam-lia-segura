@@ -42,10 +42,11 @@ export function FamilyPage() {
     return (
       <Ready>
         <PersonForm
+          key={editing.id}
           initial={editing}
           onCancel={() => setEditing(null)}
-          onSave={(p) => {
-            if (upsert("people", { ...p, updatedAt: nowIso() })) setEditing(null);
+          onSave={(p, addAnother) => {
+            if (upsert("people", { ...p, updatedAt: nowIso() })) setEditing(addAnother ? newPerson() : null);
           }}
         />
       </Ready>
@@ -106,10 +107,11 @@ export function FamilyPage() {
   );
 }
 
-export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p: Person) => void; onCancel: () => void }) {
+export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p: Person, addAnother?: boolean) => void; onCancel: () => void }) {
   const { data } = useStore();
   const [p, setP] = useState<Person>({ ...initial, ageBand: bandForPerson(initial) ?? "", birthDate: "" });
   const [photoBusy, setPhotoBusy] = useState(false);
+  const saveAndContinue = useRef(false);
   const [step, setStep] = useState(0);
   const stepHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
@@ -144,6 +146,8 @@ export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onS
 
   const submit = (ev: FormEvent) => {
     ev.preventDefault();
+    const addAnother = saveAndContinue.current;
+    saveAndContinue.current = false;
     if (photoBusy) return;
     const all = validatePerson(forSave());
     setErrors(all);
@@ -152,7 +156,8 @@ export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onS
       if (first !== undefined) setStep(first);
       return;
     }
-    onSave(forSave());
+    if (addAnother) onSave(forSave(), true);
+    else onSave(forSave());
   };
 
   const bloodKnown = p.abo !== "nao_sei" || p.rh !== "nao_sei";
@@ -282,7 +287,8 @@ export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onS
             Próxima etapa <ArrowRight aria-hidden />
           </Button>
         )}
-        <Button type="submit" disabled={photoBusy}>{photoBusy ? "Preparando foto…" : "Salvar"}</Button>
+        <Button type="submit" onClick={() => { saveAndContinue.current = false; }} disabled={photoBusy}>{photoBusy ? "Preparando foto…" : "Salvar"}</Button>
+        <Button type="submit" variant="outline" onClick={() => { saveAndContinue.current = true; }} disabled={photoBusy}>Salvar e adicionar outra pessoa</Button>
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
         </Button>

@@ -98,3 +98,14 @@ it("posiciona adicionar abaixo dos cadastros e salva uma terceira pessoa pelo fl
   expect(saved.status).toBe("ok");
   if (saved.status === "ok") expect(saved.data.people).toHaveLength(3);
 });
+
+it("salva e abre outra pessoa com formulário limpo, preservando o cadastro anterior", async () => {
+  render(<StoreProvider><FamilyPage /></StoreProvider>);
+  fireEvent.click(await screen.findByRole("button", { name: /Adicionar a primeira pessoa/ }));
+  fireEvent.change(screen.getByLabelText("Nome ou apelido"), { target: { value: "Primeira pessoa em sequência" } });
+  fireEvent.click(screen.getByRole("button", { name: "Salvar e adicionar outra pessoa" }));
+  await waitFor(() => expect((screen.getByLabelText("Nome ou apelido") as HTMLInputElement).value).toBe(""));
+  const result = parseEnvelope(localStorage.getItem(STORAGE_KEY)!);
+  expect(result.status).toBe("ok");
+  if (result.status === "ok") expect(result.data.people[0]?.name).toBe("Primeira pessoa em sequência");
+});
