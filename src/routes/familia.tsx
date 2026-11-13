@@ -1,20 +1,21 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { AddButton, DL, EmptyState, Note, PageHeader, Ready, RecordActions, RecordCard, Section, Tag, TestDataWarning } from "@/components/fs/page";
 import { CheckField, FieldError, FormErrorSummary, NumberField, SelectField, TextAreaField, TextField } from "@/components/fs/fields";
-import { ageLabel, bandForPerson } from "@/lib/domain/age";
+import { bandForPerson } from "@/lib/domain/age";
 import { ABO_OPTIONS, RH_OPTIONS, bloodLabel } from "@/lib/domain/blood";
 import { countLinks } from "@/lib/domain/links";
 import { hasErrors, validatePerson, type Errs } from "@/lib/domain/validate";
 import { AGE_BANDS, AGE_BAND_LABEL, type Person } from "@/lib/domain/types";
 import { newId, nowIso, useStore } from "@/lib/storage/store";
+import { PersonPhoto } from "@/components/fs/PersonPhoto";
 import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/familia")({
-  head: () => pageHead("Minha família", "Cadastro das pessoas da família, com idade, necessidades e vínculos."),
+  head: () => pageHead("Minha família", "Cadastro das pessoas da família, com faixa etária e características de identificação."),
   component: FamilyPage,
 });
 
@@ -28,10 +29,10 @@ function newPerson(): Person {
   };
 }
 
-const STEPS = ["Identificação", "Corpo e sangue", "Saúde e necessidades", "Vínculos"] as const;
+const STEPS = ["Identificação", "Corpo e sangue", "Saúde e necessidades", "Foto e identificação"] as const;
 type PersonErrs = Errs<Person, "blood">;
 type ErrKey = keyof PersonErrs;
-const STEP_FIELDS: readonly (readonly ErrKey[])[] = [["name", "birthDate"], ["weightKg", "heightCm", "blood"], [], ["responsibleId"]];
+const STEP_FIELDS: readonly (readonly ErrKey[])[] = [["name", "ageBand"], ["weightKg", "heightCm"], [], ["photoDataUrl", "identificationMarks"]];
 
 function FamilyPage() {
   const { data, upsert, remove } = useStore();
@@ -66,14 +67,12 @@ function FamilyPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {data.people.map((p) => {
-              const responsible = data.people.find((x) => x.id === p.responsibleId);
-              const contact = data.contacts.find((c) => c.id === p.emergencyContactId);
               const band = bandForPerson(p);
               return (
                 <RecordCard
                   key={p.id}
                   title={p.name}
-                  subtitle={[p.relation, ageLabel(p)].filter(Boolean).join(" · ")}
+                  subtitle={band ? AGE_BAND_LABEL[band] : "Faixa etária não informada"}
                   tags={
                     <>
                       {p.fictitious && <Tag tone="pending">Exemplo fictício</Tag>}
@@ -85,14 +84,15 @@ function FamilyPage() {
                     <RecordActions name={p.name} onEdit={() => setEditing(p)} onDelete={() => remove("people", p.id)} linkedCount={countLinks(data, "people", p.id)} />
                   }
                 >
+                  {p.photoDataUrl && <img src={p.photoDataUrl} alt={`Foto de ${p.name}`} className="mb-4 size-28 rounded-xl object-cover" />}
                   <DL
                     items={[
                       ["Sangue", bloodLabel(p)],
                       ["Mobilidade", p.mobility],
                       ["Deficiência", p.disability],
                       ["Alergias", p.allergies],
-                      ["Responsável", responsible?.name ?? (p.responsibleId ? "Removido" : "")],
-                      ["Contato de emergência", contact ? `${contact.name} (${contact.phone})` : ""],
+                      ["Sinais de identificação", p.identificationMarks ?? ""],
+                      ["Observações", p.notes],
                     ]}
                   />
                 </RecordCard>
@@ -105,14 +105,17 @@ function FamilyPage() {
   );
 }
 
-function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p: Person) => void; onCancel: () => void }) {
+export function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p: Person) => void; onCancel: () => void }) {
   const { data } = useStore();
-  const [p, setP] = useState<Person>(initial);
+  const [p, setP] = useState<Person>({ ...initial, ageBand: bandForPerson(initial) ?? "", birthDate: "" });
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<PersonErrs>({});
   const set = <K extends keyof Person>(k: K, v: Person[K]) => setP((prev) => ({ ...prev, [k]: v }));
   const isNew = !data.people.some((x) => x.id === initial.id);
-  const others = useMemo(() => data.people.filter((x) => x.id !== p.id), [data.people, p.id]);
+  const forSave = (): Person => ({ ...p, birthDate: "", name: p.name.trim(),
+    ...(p.bloodDocConfirmed ? { bloodDocNote: p.bloodDocNote.trim() || "Confirmado pelo usuário em documento ou exame" } :
+      { abo: "nao_sei", rh: "nao_sei", bloodDocNote: "" }) });
 
   const stepErrors = (all: PersonErrs, s: number): PersonErrs => {
     const out: PersonErrs = {};
@@ -124,7 +127,7 @@ function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p
   };
 
   const go = (next: number) => {
-    const all = validatePerson(p);
+    const all = validatePerson(forSave());
     const e = stepErrors(all, step);
     setErrors(e);
     if (next > step && hasErrors(e)) return;
@@ -133,14 +136,15 @@ function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p
 
   const submit = (ev: FormEvent) => {
     ev.preventDefault();
-    const all = validatePerson(p);
+    if (photoBusy) return;
+    const all = validatePerson(forSave());
     setErrors(all);
     if (hasErrors(all)) {
       const first = [0, 1, 2, 3].find((s) => hasErrors(stepErrors(all, s)));
       if (first !== undefined) setStep(first);
       return;
     }
-    onSave({ ...p, name: p.name.trim(), ageBand: p.birthDate ? "" : p.ageBand });
+    onSave(forSave());
   };
 
   const bloodKnown = p.abo !== "nao_sei" || p.rh !== "nao_sei";
@@ -171,25 +175,7 @@ function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p
           {step === 0 && (
             <>
               <TextField label="Nome ou apelido" value={p.name} onChange={(v) => set("name", v)} error={errors.name} maxLength={80} />
-              <TextField label="Vínculo" optional hint="Ex.: mãe, filho, avó, amigo que mora junto" value={p.relation} onChange={(v) => set("relation", v)} maxLength={60} />
-              <TextField
-                label="Data de nascimento"
-                optional
-                type="date"
-                value={p.birthDate}
-                onChange={(v) => set("birthDate", v)}
-                error={errors.birthDate}
-                hint={p.birthDate ? `Idade calculada: ${ageLabel(p)}` : "A idade é calculada automaticamente."}
-              />
-              <SelectField
-                label="Faixa de idade (se não souber a data)"
-                optional
-                value={p.ageBand}
-                onChange={(v) => set("ageBand", v)}
-                placeholder="Selecione"
-                options={AGE_BANDS.map((b) => ({ value: b, label: AGE_BAND_LABEL[b] }))}
-                hint={p.birthDate ? "Ignorada: a data de nascimento foi informada." : undefined}
-              />
+              <SelectField label="Faixa de idade" optional value={p.ageBand} onChange={(v) => set("ageBand", v)} placeholder="Não informar" options={AGE_BANDS.map((b) => ({ value: b, label: AGE_BAND_LABEL[b] }))} />
               <SelectField
                 label="Sexo"
                 optional
@@ -212,8 +198,8 @@ function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p
               </div>
               <NumberField label="Peso" optional suffix="kg" value={p.weightKg} onChange={(v) => set("weightKg", v)} error={errors.weightKg} />
               <NumberField label="Altura" optional suffix="cm" value={p.heightCm} onChange={(v) => set("heightCm", v)} error={errors.heightCm} />
-              <SelectField label="Grupo sanguíneo (ABO)" value={p.abo} onChange={(v) => set("abo", v)} options={ABO_OPTIONS} hint="Se não tiver certeza, deixe “Não sei”." />
-              <SelectField label="Fator Rh" value={p.rh} onChange={(v) => set("rh", v)} options={RH_OPTIONS} />
+              <SelectField optional label="Grupo sanguíneo (ABO)" value={p.abo} onChange={(v) => setP(prev => ({ ...prev, abo: v, bloodDocConfirmed: false }))} options={ABO_OPTIONS} hint="Se não tiver certeza, deixe “Não sei”." />
+              <SelectField optional label="Fator Rh" value={p.rh} onChange={(v) => setP(prev => ({ ...prev, rh: v, bloodDocConfirmed: false }))} options={RH_OPTIONS} />
               {bloodKnown && (
                 <div className="space-y-3 rounded-xl border-2 border-info/30 bg-info-soft p-4 sm:col-span-2">
                   <CheckField
@@ -222,9 +208,10 @@ function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p
                     checked={p.bloodDocConfirmed}
                     onChange={(v) => set("bloodDocConfirmed", v)}
                   />
-                  <TextField label="Origem documental" hint="Ex.: carteira de doador, exame laboratorial" value={p.bloodDocNote} onChange={(v) => set("bloodDocNote", v)} maxLength={120} />
+                  <TextField optional label="Origem documental" hint="Ex.: carteira de doador, exame laboratorial" value={p.bloodDocNote} onChange={(v) => set("bloodDocNote", v)} maxLength={120} />
                 </div>
               )}
+              {bloodKnown && !p.bloodDocConfirmed && <p className="sm:col-span-2 text-sm text-muted-foreground">Pode continuar sem confirmar. Ao salvar, o sangue ficará como “Não sei” até você ter certeza e marcar a confirmação.</p>}
               {errors.blood && (
                 <div className="sm:col-span-2">
                   <FieldError>{errors.blood}</FieldError>
@@ -267,33 +254,9 @@ function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p
           )}
           {step === 3 && (
             <>
-              <SelectField
-                label="Responsável humano"
-                optional
-                value={p.responsibleId ?? ""}
-                onChange={(v) => set("responsibleId", v || null)}
-                placeholder="Nenhum"
-                options={others.map((o) => ({ value: o.id, label: o.name }))}
-                error={errors.responsibleId}
-                hint={others.length === 0 ? "Cadastre outra pessoa para poder vincular." : undefined}
-              />
-              <SelectField
-                label="Contato de emergência (da sua rede)"
-                optional
-                value={p.emergencyContactId ?? ""}
-                onChange={(v) => set("emergencyContactId", v || null)}
-                placeholder="Nenhum"
-                options={data.contacts.map((c) => ({ value: c.id, label: `${c.name} — ${c.phone}` }))}
-                hint={data.contacts.length === 0 ? "Nenhum contato na Rede (M04) ainda." : undefined}
-              />
-              {data.contacts.length === 0 && (
-                <p className="text-sm sm:col-span-2">
-                  <Link to="/rede" className="font-bold text-foreground underline decoration-primary decoration-2">Cadastrar contatos na Rede</Link> (salve esta pessoa antes para não perder o que digitou).
-                </p>
-              )}
-              <div className="sm:col-span-2">
-                <TextAreaField label="Observações" optional value={p.notes} onChange={(v) => set("notes", v)} />
-              </div>
+              <div className="sm:col-span-2"><PersonPhoto onBusyChange={setPhotoBusy} value={p.photoDataUrl ?? ""} onChange={(v) => set("photoDataUrl", v)} /></div>
+              <div className="sm:col-span-2"><TextAreaField label="Sinais de identificação" optional hint="Ex.: tatuagem no braço esquerdo, pinta no rosto ou cicatriz. Descreva a localização." value={p.identificationMarks ?? ""} onChange={(v) => set("identificationMarks", v)} /></div>
+              <div className="sm:col-span-2"><TextAreaField label="Observações" optional value={p.notes} onChange={(v) => set("notes", v)} /></div>
             </>
           )}
         </div>
@@ -310,7 +273,7 @@ function PersonForm({ initial, onSave, onCancel }: { initial: Person; onSave: (p
             Próxima etapa <ArrowRight aria-hidden />
           </Button>
         )}
-        <Button type="submit">Salvar</Button>
+        <Button type="submit" disabled={photoBusy}>{photoBusy ? "Preparando foto…" : "Salvar"}</Button>
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
         </Button>

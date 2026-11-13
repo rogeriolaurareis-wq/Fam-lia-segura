@@ -31,6 +31,8 @@ export type Sex = "" | "feminino" | "masculino" | "intersexo" | "prefiro_nao_inf
 export type Pregnancy = "" | "nao_se_aplica" | "gestante" | "amamentando";
 
 export interface Person extends Base {
+  photoDataUrl?: string;
+  identificationMarks?: string;
   name: string;
   relation: string;
   birthDate: string; // yyyy-mm-dd or ""
